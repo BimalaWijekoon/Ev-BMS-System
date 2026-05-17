@@ -1,6 +1,8 @@
 """
 Inference module for EV Battery ML Pipeline.
 Loads all saved models and config, runs predictions, returns structured results.
+Regression target: internal_resistance (Ω)
+Classification target: over_temp_flag (ML) + over_voltage_flag (rule-based)
 """
 import json, os, sys
 import numpy as np
@@ -34,7 +36,7 @@ def predict_single(raw_input_dict: dict, loaded_models: dict = None) -> dict:
         loaded_models: Pre-loaded models dict (from load_models). Loads if None.
     
     Returns:
-        Dict with keys: cycle_degradation, over_temp_probability,
+        Dict with keys: internal_resistance, over_temp_probability,
         over_temp_flag, over_voltage_flag
     """
     if loaded_models is None:
@@ -50,7 +52,7 @@ def predict_single(raw_input_dict: dict, loaded_models: dict = None) -> dict:
     
     # Ensure all needed raw columns exist with defaults
     required = ['SOC','SOH','terminal_voltage','battery_current','battery_temp',
-        'ambient_temp','internal_resistance','action_current','action_voltage',
+        'ambient_temp','action_current','action_voltage',
         'dT_dt','dV_dt','soc_delta','thermal_stress_index','aging_indicator',
         'charging_efficiency','charging_time','balancing_time']
     for col in required:
@@ -60,9 +62,8 @@ def predict_single(raw_input_dict: dict, loaded_models: dict = None) -> dict:
     # Transform
     X_scaled = pp.transform(df)
     
-    # Regression prediction
-    y_log = reg.predict(X_scaled)
-    cycle_deg = float(np.expm1(y_log[0]))
+    # Regression prediction — internal_resistance in Ω (no log transform)
+    ir_pred = float(reg.predict(X_scaled)[0])
     
     # Classification prediction
     probs = cls.predict_proba(X_scaled)[:,1]
@@ -76,7 +77,7 @@ def predict_single(raw_input_dict: dict, loaded_models: dict = None) -> dict:
     over_voltage_flag = int(av > 4.15 or tv > 4.18)
     
     return {
-        'cycle_degradation': cycle_deg,
+        'internal_resistance': ir_pred,
         'over_temp_probability': over_temp_prob,
         'over_temp_flag': over_temp_flag,
         'over_voltage_flag': over_voltage_flag
@@ -105,15 +106,14 @@ def predict_batch(df: pd.DataFrame, loaded_models: dict = None) -> pd.DataFrame:
     df_out = df.copy()
     
     # Drop targets if present
-    for t in ['cycle_degradation','over_temp_flag','over_voltage_flag']:
+    for t in ['cycle_degradation','over_temp_flag','over_voltage_flag','internal_resistance']:
         if t in df_out.columns:
             df_out = df_out.drop(columns=[t])
     
     X_scaled = pp.transform(df_out)
     
-    # Regression
-    y_log = reg.predict(X_scaled)
-    df_out['pred_cycle_degradation'] = np.expm1(y_log)
+    # Regression — internal_resistance in Ω (no log transform)
+    df_out['pred_internal_resistance'] = reg.predict(X_scaled)
     
     # Classification
     probs = cls.predict_proba(X_scaled)[:,1]

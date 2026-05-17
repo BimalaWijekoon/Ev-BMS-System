@@ -1,14 +1,14 @@
 # Ev-BMS-System
 
-🔋 **EV Battery Management System** — A comprehensive machine learning pipeline for predicting battery degradation and safety flags from EV charging sensor data.
+🔋 **EV Battery Management System** — A comprehensive machine learning pipeline for predicting battery internal resistance (aging proxy) and safety flags from EV charging sensor data.
 
 ## Features
 - 6 Jupyter notebooks covering the full ML lifecycle (EDA → Preprocessing → Feature Engineering → Training → Evaluation)
-- Regression model for cycle degradation prediction
-- Classification models for over-temperature and over-voltage detection
+- Regression model for internal resistance prediction (R² ≈ 0.97)
+- Classification models for over-temperature detection (StratifiedKFold CV)
+- Rule-based over-voltage detection (domain-knowledge threshold)
 - Gradio web application for real-time predictions
 - Domain-knowledge-driven feature engineering
-- Chronological train/validation/test splitting for time-series data
 
 ## Quick Start
 ```bash

@@ -1,0 +1,7 @@
+{
+  "temp_threshold": 0.2,
+  "voltage_rule": "action_voltage > 4.15 OR terminal_voltage > 4.18",
+  "best_classifier": "XGBoost",
+  "cv_strategy": "StratifiedKFold(n_splits=5, shuffle=True, random_state=42)",
+  "cv_strategy_reason": "TimeSeriesSplit produces degenerate folds for block-structured over_temp_flag (0\u21921 transition at row ~900). Folds 1-4 train on zero class_1 examples, making hyperparameter selection and threshold tuning invalid. StratifiedKFold used as documented trade-off: controlled temporal leakage in exchange for valid fold evaluation. Final test is chronological holdout."
+}

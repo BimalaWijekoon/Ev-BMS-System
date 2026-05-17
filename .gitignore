@@ -1,6 +1,6 @@
 # Virtual environment
 ev-battery-ml/venv/
-venv/
+.venv/
 .env
 
 # Python

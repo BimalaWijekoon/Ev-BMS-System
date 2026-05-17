@@ -1,5 +1,6 @@
 """
-EV Battery Degradation Predictor — Gradio Web Interface
+EV Battery Intelligence Predictor — Gradio Web Interface
+Predicts internal resistance (aging proxy) and safety flags.
 Two tabs: Single Prediction and Batch CSV Prediction.
 """
 import sys, os
@@ -20,22 +21,22 @@ try:
     MODELS_LOADED = True
 except Exception as e:
     print(f"Warning: Could not load models: {e}")
-    print("Run notebooks 01-05 first to generate model artifacts.")
+    print("Run notebooks 01-06 first to generate model artifacts.")
     MODELS_LOADED = False
     MODELS = None
 
 
 def single_predict(soc, soh, terminal_voltage, battery_current, battery_temp,
-                   ambient_temp, internal_resistance, action_current,
+                   ambient_temp, action_current,
                    action_voltage, charging_efficiency, charging_time):
     """Run single prediction and return formatted results."""
     if not MODELS_LOADED:
-        return (0.0, 0.0, "⚠️ Models not loaded", "⚠️ Models not loaded")
+        return ("⚠️ Models not loaded", "⚠️ Models not loaded", "⚠️ Models not loaded", "⚠️ Models not loaded")
     
     raw_input = {
         'SOC': soc, 'SOH': soh, 'terminal_voltage': terminal_voltage,
         'battery_current': battery_current, 'battery_temp': battery_temp,
-        'ambient_temp': ambient_temp, 'internal_resistance': internal_resistance,
+        'ambient_temp': ambient_temp,
         'action_current': action_current, 'action_voltage': action_voltage,
         'dT_dt': 0.0, 'dV_dt': 0.0, 'soc_delta': 0.0,
         'thermal_stress_index': min(battery_temp / 1129.0, 1.0),
@@ -47,12 +48,12 @@ def single_predict(soc, soh, terminal_voltage, battery_current, battery_temp,
     
     result = predict_single(raw_input, MODELS)
     
-    deg = result['cycle_degradation']
+    ir = result['internal_resistance']
     temp_prob = result['over_temp_probability'] * 100
-    temp_status = "🟢 SAFE — Normal Temperature" if result['over_temp_flag'] == 0 else "🔴 WARNING — Over-Temperature Risk Detected!"
-    volt_status = "🟢 SAFE — Normal Voltage" if result['over_voltage_flag'] == 0 else "🔴 WARNING — Over-Voltage Risk Detected!"
+    temp_status = "🟢 SAFE — Normal Temperature" if result['over_temp_flag'] == 0 else "🔴 WARNING — Over-Temperature Risk!"
+    volt_status = "🟢 SAFE — Normal Voltage" if result['over_voltage_flag'] == 0 else "🔴 WARNING — Over-Voltage Risk!"
     
-    return (f"{deg:.8f}", f"{temp_prob:.2f}%", temp_status, volt_status)
+    return (f"{ir:.6f} Ω", f"{temp_prob:.2f}%", temp_status, volt_status)
 
 
 def batch_predict(file):
@@ -74,18 +75,18 @@ def batch_predict(file):
 
 # Build Gradio Interface
 with gr.Blocks(
-    title="EV Battery Degradation Predictor",
+    title="EV Battery Intelligence Predictor",
     theme=gr.themes.Soft(primary_hue="blue", secondary_hue="green")
 ) as demo:
     
     gr.Markdown("""
-    # 🔋 EV Battery Degradation Predictor
-    ### Predict battery cycle degradation and safety flags using ML models
+    # 🔋 EV Battery Intelligence Predictor
+    ### Predict battery aging and safety status using ML models
     
-    This application uses trained **XGBoost** and **classification models** to predict:
-    - **Cycle Degradation** — how much the battery degrades per charge cycle
-    - **Over-Temperature Risk** — probability of thermal runaway
-    - **Over-Voltage Risk** — voltage safety status
+    This application uses trained **Random Forest / XGBoost** models to predict:
+    - **Internal Resistance (Ω)** — primary electrochemical aging indicator (R² ≈ 0.97)
+    - **Over-Temperature Risk** — probability of thermal anomaly
+    - **Over-Voltage Risk** — voltage safety status (rule-based threshold)
     """)
     
     with gr.Tab("🔍 Single Prediction"):
@@ -101,7 +102,6 @@ with gr.Blocks(
                 ambient_temp = gr.Number(value=25.0, label="Ambient Temperature (°C)")
             
             with gr.Column():
-                internal_resistance = gr.Slider(0.01, 0.20, value=0.05, step=0.001, label="Internal Resistance (Ω)")
                 action_current = gr.Number(value=15.0, label="Action Current (A)")
                 action_voltage = gr.Number(value=3.7, label="Action Voltage (V)")
                 charging_efficiency = gr.Slider(0.7, 1.0, value=0.85, step=0.001, label="Charging Efficiency")
@@ -110,7 +110,7 @@ with gr.Blocks(
         predict_btn = gr.Button("🔮 Predict", variant="primary", size="lg")
         
         with gr.Row():
-            deg_output = gr.Textbox(label="Predicted Cycle Degradation", interactive=False)
+            ir_output = gr.Textbox(label="Predicted Internal Resistance (Ω)", interactive=False)
             temp_risk = gr.Textbox(label="Over-Temperature Risk", interactive=False)
         with gr.Row():
             temp_status = gr.Textbox(label="Temperature Safety Status", interactive=False)
@@ -119,9 +119,9 @@ with gr.Blocks(
         predict_btn.click(
             fn=single_predict,
             inputs=[soc, soh, terminal_voltage, battery_current, battery_temp,
-                    ambient_temp, internal_resistance, action_current,
+                    ambient_temp, action_current,
                     action_voltage, charging_efficiency, charging_time],
-            outputs=[deg_output, temp_risk, temp_status, volt_status]
+            outputs=[ir_output, temp_risk, temp_status, volt_status]
         )
     
     with gr.Tab("📊 Batch CSV Prediction"):
