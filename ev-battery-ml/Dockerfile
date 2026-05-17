@@ -19,5 +19,5 @@ COPY . .
 # Expose port
 EXPOSE 7860
 
-# Run Streamlit
-CMD ["streamlit", "run", "app/app.py", "--server.port=7860", "--server.address=0.0.0.0"]
+# Run Streamlit app
+CMD ["streamlit", "run", "app/app.py", "--server.port=7860", "--server.address=0.0.0.0", "--logger.level=debug"]
