@@ -259,7 +259,7 @@ with tab1:
 
     st.markdown("---")
 
-    if st.button("🔮  Run Prediction", type="primary", width='stretch'):
+    if st.button("🔮  Run Prediction", type="primary", use_container_width=True):
         raw_input = {
             'SOC': soc, 'SOH': soh, 'terminal_voltage': terminal_voltage,
             'battery_current': battery_current, 'battery_temp': battery_temp,
@@ -325,11 +325,11 @@ with tab1:
         g1, g2 = st.columns(2)
         with g1:
             st.plotly_chart(make_gauge(ir_pred * 1000, "IR (mΩ)", 10, 200, "#818cf8", " mΩ"),
-                          width='stretch')
+                          use_container_width=True)
         with g2:
             gauge_color = "#34d399" if temp_prob < 50 else "#ef4444"
             st.plotly_chart(make_gauge(temp_prob, "Over-Temp Risk", 0, 100, gauge_color, "%"),
-                          width='stretch')
+                          use_container_width=True)
 
         # ── Interpretation ──
         st.markdown("---")
@@ -387,7 +387,7 @@ with tab1:
                     health_val, "Battery Health", 0, 100,
                     "#ef4444" if health_val < 40 else "#fbbf24" if health_val < 60 else "#22c55e",
                     "%"
-                ), width='stretch')
+                ), use_container_width=True)
             
             with h2:
                 st.markdown(f"""
@@ -476,9 +476,9 @@ with tab2:
         df_input = pd.read_csv(uploaded)
 
         with st.expander("📋 Input Data Preview", expanded=True):
-            st.dataframe(df_input.head(10), width='stretch')
+            st.dataframe(df_input.head(10), use_container_width=True)
 
-        if st.button("🔮  Run Batch Prediction", type="primary", width='stretch'):
+        if st.button("🔮  Run Batch Prediction", type="primary", use_container_width=True):
             with st.spinner("Processing batch..."):
                 result_df = predict_batch(df_input, MODELS)
 
@@ -486,7 +486,7 @@ with tab2:
 
             # Show predictions
             pred_cols = [c for c in result_df.columns if c.startswith('pred_')]
-            st.dataframe(result_df[pred_cols].head(20), width='stretch')
+            st.dataframe(result_df[pred_cols].head(20), use_container_width=True)
 
             # Distribution charts
             if 'pred_internal_resistance' in result_df.columns:
@@ -499,7 +499,7 @@ with tab2:
                         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                         font=dict(color="#e2e8f0"), xaxis_title="IR (Ω)", yaxis_title="Count"
                     )
-                    st.plotly_chart(fig_ir, width='stretch')
+                    st.plotly_chart(fig_ir, use_container_width=True)
 
                 with ch2:
                     if 'pred_over_temp_prob' in result_df.columns:
@@ -510,13 +510,13 @@ with tab2:
                             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                             font=dict(color="#e2e8f0"), xaxis_title="Probability", yaxis_title="Count"
                         )
-                        st.plotly_chart(fig_tp, width='stretch')
+                        st.plotly_chart(fig_tp, use_container_width=True)
 
             # Download
             csv_data = result_df.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Download Predictions CSV", csv_data,
                 file_name="ev_battery_predictions.csv", mime="text/csv",
-                width='stretch')
+                use_container_width=True)
 
 # ═══════════════════════════════════════════════════════════════════════
 # TAB 3: Model Info
@@ -562,7 +562,7 @@ with tab3:
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(color="#e2e8f0"), height=350
             )
-            st.plotly_chart(fig_reg, width='stretch')
+            st.plotly_chart(fig_reg, use_container_width=True)
 
     with r2:
         st.markdown("#### 🎯 Classification — Over-Temperature")
@@ -587,7 +587,7 @@ with tab3:
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(color="#e2e8f0"), height=350
             )
-            st.plotly_chart(fig_cls, width='stretch')
+            st.plotly_chart(fig_cls, use_container_width=True)
 
     # Feature columns
     with st.expander("🔧 Selected Features"):
@@ -609,7 +609,7 @@ with tab4:
         <p>Real-time health check for all model components, preprocessor, and configuration files.</p>
     </div>""", unsafe_allow_html=True)
     
-    if st.button("🔍 Run Health Check", type="primary", width='stretch'):
+    if st.button("🔍 Run Health Check", type="primary", use_container_width=True):
         with st.spinner("Checking model components..."):
             health = check_model_health(os.path.join(os.path.dirname(__file__), '..', 'models'))
         
@@ -695,24 +695,24 @@ with tab5:
     button_col1, button_col2, button_col3, button_col4 = st.columns(4)
     
     with button_col1:
-        if st.button("▶️  Start" if not st.session_state.sim_running else "⏸️ Pause", width='stretch'):
+        if st.button("▶️  Start" if not st.session_state.sim_running else "⏸️ Pause", use_container_width=True):
             st.session_state.sim_running = not st.session_state.sim_running
     
     with button_col2:
-        if st.button("⏭️  Step", width='stretch'):
+        if st.button("⏭️  Step", use_container_width=True):
             st.session_state.sim_step += 1
             st.session_state.sim_state = st.session_state.simulator.step(
                 st.session_state.sim_state, soc_increment
             )
     
     with button_col3:
-        if st.button("🔄 Reset", width='stretch'):
+        if st.button("🔄 Reset", use_container_width=True):
             st.session_state.sim_state = st.session_state.simulator.get_initial_state()
             st.session_state.sim_step = 0
             st.session_state.sim_running = False
     
     with button_col4:
-        if st.button("🎯 Run to 100%", width='stretch'):
+        if st.button("🎯 Run to 100%", use_container_width=True):
             with st.spinner("Simulating charge cycle..."):
                 while st.session_state.sim_state['raw']['SOC'] < 99.0:
                     st.session_state.sim_state = st.session_state.simulator.step(
@@ -756,8 +756,9 @@ with tab5:
     st.markdown("### 🔮 Real-Time Model Predictions")
     
     try:
-        # Use engineered state for prediction
-        pred_result = predict_single(st.session_state.sim_state['engineered'], MODELS)
+        # Use raw state — predict_single runs the full preprocessor pipeline
+        # (engineer → impute → scale → RFE select), so it needs raw sensor values
+        pred_result = predict_single(st.session_state.sim_state['raw'], MODELS)
         
         # Prediction displays
         p1, p2, p3, p4 = st.columns(4)
@@ -767,7 +768,7 @@ with tab5:
             st.plotly_chart(make_gauge(
                 ir_pred * 1000, 
                 "Predicted IR", 10, 200, "#818cf8", "mΩ"
-            ), width='stretch')
+            ), use_container_width=True)
         
         with p2:
             temp_prob = pred_result['over_temp_probability'] * 100
@@ -775,7 +776,7 @@ with tab5:
             st.plotly_chart(make_gauge(
                 temp_prob, 
                 "Over-Temp Risk", 0, 100, gauge_color, "%"
-            ), width='stretch')
+            ), use_container_width=True)
         
         with p3:
             temp_flag = pred_result['over_temp_flag']

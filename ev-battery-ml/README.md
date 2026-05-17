@@ -3,11 +3,18 @@ title: EV Battery Intelligence Predictor
 emoji: 🔋
 colorFrom: blue
 colorTo: green
-sdk: docker
+sdk: streamlit
+sdk_version: 1.44.0
+app_file: app/app.py
 pinned: false
 ---
 
 # 🔋 EV Battery Intelligence System
+
+[![HuggingFace Space](https://img.shields.io/badge/🤗%20HuggingFace-Space%20Live-yellow)](https://huggingface.co/spaces/bmwmiuranda/ev-battery-intelligence)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://bmwmiuranda-ev-battery-intelligence.hf.space)
+[![Python](https://img.shields.io/badge/python-3.13-blue)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/streamlit-1.44-red)](https://streamlit.io)
 
 **Advanced ML-powered battery diagnostics for electric vehicles** — Real-time internal resistance prediction, health scoring, RUL estimation, and fleet analytics.
 

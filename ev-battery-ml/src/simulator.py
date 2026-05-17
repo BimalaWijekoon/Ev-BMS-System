@@ -23,9 +23,10 @@ class BatterySimulator:
         self._analyze_patterns()
         
         # Load RFE-selected features (what models expect)
-        import json
+        import json, os as _os
         try:
-            with open('models/feature_columns.json') as f:
+            _base = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+            with open(_os.path.join(_base, 'models', 'feature_columns.json')) as f:
                 self.rfe_features = json.load(f)
         except:
             self.rfe_features = None  # Will use all features if not found

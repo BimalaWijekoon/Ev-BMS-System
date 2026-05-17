@@ -1,0 +1,17 @@
+[
+  "SOH",
+  "battery_current",
+  "ambient_temp",
+  "action_current",
+  "action_voltage",
+  "dV_dt",
+  "soc_delta",
+  "charging_efficiency",
+  "charging_time",
+  "balancing_time",
+  "soc_range_rolling",
+  "thermal_acceleration",
+  "voltage_efficiency",
+  "internal_resistance_sq",
+  "aging_indicator_sq"
+]

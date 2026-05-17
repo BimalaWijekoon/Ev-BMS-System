@@ -76,6 +76,11 @@ class BatteryPreprocessor:
             self.fit_ir_baseline = saved['fit_ir_baseline']
             self.columns_to_drop = saved.get('columns_to_drop', ['battery_temp'])
             self.is_fitted = True
+            # Compatibility: sklearn >= 1.5 removed _fill_dtype from SimpleImputer.
+            # Patch it back from statistics_ so transform() works across versions.
+            if (hasattr(self.imputer, 'statistics_')
+                    and not hasattr(self.imputer, '_fill_dtype')):
+                self.imputer._fill_dtype = self.imputer.statistics_.dtype
         
         if os.path.exists(features_path):
             with open(features_path, 'r') as f:
