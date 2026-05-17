@@ -154,14 +154,21 @@ class BatteryPreprocessor:
         # Apply feature engineering using TRAINING baseline
         X = engineer_all_features(X, self.fit_ir_baseline, self.columns_to_drop)
         
-        # Select only trained feature columns
-        X_selected = X[self.feature_columns]
+        # Impute all engineered features (imputer was fit on all 23)
+        X_imputed = pd.DataFrame(
+            self.imputer.transform(X),
+            columns=X.columns,
+            index=X.index
+        )
         
-        # Impute and scale
-        X_imputed = self.imputer.transform(X_selected)
+        # Scale all engineered features (scaler was fit on all 23)
         X_scaled = self.scaler.transform(X_imputed)
+        X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns, index=X.index)
         
-        return X_scaled
+        # Select only RFE-selected features (best 15 from engineered 23)
+        X_final = X_scaled_df[self.feature_columns]
+        
+        return X_final.values
     
     def fit_transform(self, X_train: pd.DataFrame) -> np.ndarray:
         """Fit on training data and return transformed training data."""

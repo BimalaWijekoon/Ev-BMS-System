@@ -18,14 +18,129 @@ def load_models(models_dir=None):
     """Load all saved models and config from models/ directory."""
     md = models_dir or MODELS_DIR
     loaded = {}
-    loaded['preprocessor'] = BatteryPreprocessor.load(md)
-    loaded['regression_model'] = joblib.load(os.path.join(md, 'regression_model.pkl'))
-    loaded['classification_model_temp'] = joblib.load(os.path.join(md, 'classification_model_temp.pkl'))
-    with open(os.path.join(md, 'classification_config.json'), 'r') as f:
-        loaded['config'] = json.load(f)
-    with open(os.path.join(md, 'feature_columns.json'), 'r') as f:
-        loaded['feature_columns'] = json.load(f)
+    
+    try:
+        loaded['preprocessor'] = BatteryPreprocessor.load(md)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load preprocessor: {str(e)}")
+    
+    try:
+        loaded['regression_model'] = joblib.load(os.path.join(md, 'regression_model.pkl'))
+    except Exception as e:
+        raise RuntimeError(f"Failed to load regression model: {str(e)}")
+    
+    try:
+        loaded['classification_model_temp'] = joblib.load(os.path.join(md, 'classification_model_temp.pkl'))
+    except Exception as e:
+        raise RuntimeError(f"Failed to load classification model: {str(e)}")
+    
+    try:
+        with open(os.path.join(md, 'classification_config.json'), 'r') as f:
+            loaded['config'] = json.load(f)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load classification config: {str(e)}")
+    
+    try:
+        with open(os.path.join(md, 'feature_columns.json'), 'r') as f:
+            loaded['feature_columns'] = json.load(f)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load feature columns: {str(e)}")
+    
     return loaded
+
+def check_model_health(models_dir=None) -> dict:
+    """
+    Check the health status of all loaded models.
+    
+    Returns:
+        Dict with health status of each component.
+    """
+    md = models_dir or MODELS_DIR
+    health = {
+        'status': 'healthy',
+        'errors': [],
+        'components': {}
+    }
+    
+    # Check preprocessor
+    try:
+        pp = BatteryPreprocessor.load(md)
+        health['components']['preprocessor'] = {
+            'status': 'ok',
+            'fitted': pp.is_fitted,
+            'features': len(pp.feature_columns) if pp.feature_columns else 0,
+            'has_scaler': pp.scaler is not None,
+            'has_imputer': pp.imputer is not None
+        }
+    except Exception as e:
+        health['components']['preprocessor'] = {'status': 'error', 'error': str(e)}
+        health['errors'].append(f"Preprocessor: {str(e)}")
+        health['status'] = 'unhealthy'
+    
+    # Check regression model
+    try:
+        reg_path = os.path.join(md, 'regression_model.pkl')
+        if os.path.exists(reg_path):
+            reg = joblib.load(reg_path)
+            health['components']['regression_model'] = {
+                'status': 'ok',
+                'type': type(reg).__name__,
+                'file_exists': True
+            }
+        else:
+            health['components']['regression_model'] = {'status': 'missing', 'file_exists': False}
+            health['errors'].append("Regression model file not found")
+            health['status'] = 'unhealthy'
+    except Exception as e:
+        health['components']['regression_model'] = {'status': 'error', 'error': str(e)}
+        health['errors'].append(f"Regression model: {str(e)}")
+        health['status'] = 'unhealthy'
+    
+    # Check classification model
+    try:
+        cls_path = os.path.join(md, 'classification_model_temp.pkl')
+        if os.path.exists(cls_path):
+            cls = joblib.load(cls_path)
+            health['components']['classification_model'] = {
+                'status': 'ok',
+                'type': type(cls).__name__,
+                'file_exists': True
+            }
+        else:
+            health['components']['classification_model'] = {'status': 'missing', 'file_exists': False}
+            health['errors'].append("Classification model file not found")
+            health['status'] = 'unhealthy'
+    except Exception as e:
+        health['components']['classification_model'] = {'status': 'error', 'error': str(e)}
+        health['errors'].append(f"Classification model: {str(e)}")
+        health['status'] = 'unhealthy'
+    
+    # Check config files
+    config_checks = [
+        ('classification_config.json', 'classification_config'),
+        ('feature_columns.json', 'feature_columns')
+    ]
+    for fname, name in config_checks:
+        try:
+            fpath = os.path.join(md, fname)
+            if os.path.exists(fpath):
+                with open(fpath, 'r') as f:
+                    content = json.load(f)
+                health['components'][name] = {
+                    'status': 'ok',
+                    'file_exists': True,
+                    'size': len(str(content))
+                }
+            else:
+                health['components'][name] = {'status': 'missing', 'file_exists': False}
+                health['errors'].append(f"{fname} not found")
+                health['status'] = 'unhealthy'
+        except Exception as e:
+            health['components'][name] = {'status': 'error', 'error': str(e)}
+            health['errors'].append(f"{name}: {str(e)}")
+            health['status'] = 'unhealthy'
+    
+    return health
 
 def predict_single(raw_input_dict: dict, loaded_models: dict = None) -> dict:
     """
@@ -52,7 +167,7 @@ def predict_single(raw_input_dict: dict, loaded_models: dict = None) -> dict:
     
     # Ensure all needed raw columns exist with defaults
     required = ['SOC','SOH','terminal_voltage','battery_current','battery_temp',
-        'ambient_temp','action_current','action_voltage',
+        'ambient_temp','internal_resistance','action_current','action_voltage',
         'dT_dt','dV_dt','soc_delta','thermal_stress_index','aging_indicator',
         'charging_efficiency','charging_time','balancing_time']
     for col in required:
