@@ -1,4 +1,13 @@
-
+---
+title: EV Battery Intelligence Predictor
+emoji: 🔋
+colorFrom: blue
+colorTo: green
+sdk: streamlit
+sdk_version: 1.44.0
+app_file: app/app.py
+pinned: false
+---
 
 <div align="center">
 
@@ -284,6 +293,13 @@ jupyter notebook notebooks/
 
 This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
 
+---
+
+## 👤 Author
+
+**Bimala Wijekoon**
+- GitHub: [@BimalaWijekoon](https://github.com/BimalaWijekoon)
+- HuggingFace: [@bmwmiuranda](https://huggingface.co/bmwmiuranda)
 
 ---
 
