@@ -22,6 +22,9 @@
 
 ## 📌 Overview
 
+<img width="1905" height="851" alt="image" src="https://github.com/user-attachments/assets/acd4e233-7bef-44d5-b683-1680b4f5b3bb" />
+
+
 The **EV Battery Intelligence System** is a complete end-to-end machine learning pipeline that predicts EV battery degradation in real time. Built with **XGBoost** models trained on **1,900 charging cycles**, it enables maintenance teams to:
 
 - Predict **internal resistance** (the primary electrochemical aging signal) with **R² = 0.9999**
